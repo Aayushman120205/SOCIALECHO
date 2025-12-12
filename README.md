@@ -1,10 +1,8 @@
 # SocialEcho
 
 A social networking platform with automated content moderation and context-based authentication system.
-![Uploading image.png…]()
+<img width="1920" height="1117" alt="image" src="https://github.com/user-attachments/assets/f7bb44b6-f6de-4441-83a8-5b88e7122273" />
 
-
-![UI-community](https://raw.githubusercontent.com/nz-m/SocialEcho/main/resources/UI-community.png)
 
 ## Table of Contents
 
