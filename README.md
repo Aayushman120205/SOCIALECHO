@@ -1,6 +1,8 @@
 # SocialEcho
 
 A social networking platform with automated content moderation and context-based authentication system.
+
+
 <img width="1920" height="1117" alt="image" src="https://github.com/user-attachments/assets/f7bb44b6-f6de-4441-83a8-5b88e7122273" />
 
 
@@ -84,7 +86,8 @@ There are three distinct user roles within the system:
 
 ## Schema Diagram
 
-![Schema Diagram](https://raw.githubusercontent.com/nz-m/SocialEcho/main/resources/Schema-Diagram.png)
+
+<img width="1406" height="1117" alt="image" src="https://github.com/user-attachments/assets/bceac5b4-ec91-492c-a7fb-aa9462f02caf" />
 
 
 
