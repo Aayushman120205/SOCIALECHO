@@ -22,28 +22,29 @@ const {
 } = require("../controllers/community.controller");
 
 const decodeToken = require("../middlewares/auth/decodeToken");
+const requireCommunityModerator = require("../middlewares/auth/requireCommunityModerator");
 
 router.use(passport.authenticate("jwt", { session: false }, null), decodeToken);
 
 router.get("/notmember", getNotMemberCommunities);
 router.get("/member", getMemberCommunities);
-router.get("/:name/reported-posts", getReportedPosts);
+router.get("/:name/reported-posts", requireCommunityModerator, getReportedPosts);
 router.get("/:name/moderators", getCommunityMods);
 router.get("/:name/members", getCommunityMembers);
 router.get("/:name", getCommunity);
 router.get("/", getCommunities);
 
 router.post("/report", reportPost);
-router.post("/rules", addRules);
-router.post("/:name/ban/:id", banUser);
-router.post("/:name/unban/:id", unbanUser);
+router.post("/rules", requireCommunityModerator, addRules);
+router.post("/:name/ban/:id", requireCommunityModerator, banUser);
+router.post("/:name/unban/:id", requireCommunityModerator, unbanUser);
 router.post("/:name/join", joinCommunity);
 router.post("/:name/leave", leaveCommunity);
-router.post("/:name/add-all-rules", addRulesToCommunity);
+router.post("/:name/add-all-rules", requireCommunityModerator, addRulesToCommunity);
 router.post("/:name", createCommunity);
 
-router.delete("/reported-posts/:postId", removeReportedPost);
+router.delete("/reported-posts/:postId", requireCommunityModerator, removeReportedPost);
 
-router.patch("/:name/add-moderators", addModToCommunity);
+router.patch("/:name/add-moderators", requireCommunityModerator, addModToCommunity);
 
 module.exports = router;

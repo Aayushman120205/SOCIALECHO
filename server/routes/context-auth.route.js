@@ -48,16 +48,23 @@ router.get(
 );
 router.get("/user-preferences", requireAuth, decodeToken, getUserPreferences);
 
-router.delete("/context-data/:contextId", requireAuth, deleteContextAuthData);
+router.delete(
+  "/context-data/:contextId",
+  requireAuth,
+  decodeToken,
+  deleteContextAuthData
+);
 
 router.patch(
   "/context-data/block/:contextId",
   requireAuth,
+  decodeToken,
   blockContextAuthData
 );
 router.patch(
   "/context-data/unblock/:contextId",
   requireAuth,
+  decodeToken,
   unblockContextAuthData
 );
 

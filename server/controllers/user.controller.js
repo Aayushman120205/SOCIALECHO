@@ -331,9 +331,11 @@ const addUser = async (req, res, next) => {
 
 const logout = async (req, res) => {
   try {
+    const userId = req.userId;
     const accessToken = req.headers.authorization?.split(" ")[1] ?? null;
-    if (accessToken) {
-      await Token.deleteOne({ accessToken });
+
+    if (userId && accessToken) {
+      await Token.deleteOne({ user: userId, accessToken });
       await saveLogInfo(
         null,
         MESSAGE.LOGOUT_SUCCESS,
@@ -341,6 +343,7 @@ const logout = async (req, res) => {
         LEVEL.INFO
       );
     }
+
     res.status(200).json({
       message: "Logout successful",
     });

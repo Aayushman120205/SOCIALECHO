@@ -1,6 +1,7 @@
 const UserContext = require("../models/context.model");
 const UserPreference = require("../models/preference.model");
 const SuspiciousLogin = require("../models/suspiciousLogin.model");
+const User = require("../models/user.model");
 const geoip = require("geoip-lite");
 const { saveLogInfo } = require("../middlewares/logger/logInfo");
 const formatCreatedAt = require("../utils/timeConverter");
@@ -17,20 +18,19 @@ const getCurrentContextData = (req) => {
   const location = geoip.lookup(ip) || "unknown";
   const country = location.country ? location.country.toString() : "unknown";
   const city = location.city ? location.city.toString() : "unknown";
-  const browser = req.useragent.browser
-    ? `${req.useragent.browser} ${req.useragent.version}`
+  const userAgent = req.useragent || {};
+  const browser = userAgent.browser
+    ? `${userAgent.browser} ${userAgent.version || ""}`.trim()
     : "unknown";
-  const platform = req.useragent.platform
-    ? req.useragent.platform.toString()
+  const platform = userAgent.platform
+    ? userAgent.platform.toString()
     : "unknown";
-  const os = req.useragent.os ? req.useragent.os.toString() : "unknown";
-  const device = req.useragent.device
-    ? req.useragent.device.toString()
-    : "unknown";
+  const os = userAgent.os ? userAgent.os.toString() : "unknown";
+  const device = userAgent.device ? userAgent.device.toString() : "unknown";
 
-  const isMobile = req.useragent.isMobile || false;
-  const isDesktop = req.useragent.isDesktop || false;
-  const isTablet = req.useragent.isTablet || false;
+  const isMobile = userAgent.isMobile || false;
+  const isDesktop = userAgent.isDesktop || false;
+  const isTablet = userAgent.isTablet || false;
 
   const deviceType = isMobile
     ? "Mobile"
@@ -331,10 +331,25 @@ const addContextData = async (req, res) => {
  */
 const getAuthContextData = async (req, res) => {
   try {
-    const result = await UserContext.findOne({ user: req.userId });
+    let result = await UserContext.findOne({ user: req.userId });
 
     if (!result) {
-      return res.status(404).json({ message: "Not found" });
+      const user = await User.findById(req.userId);
+      const currentContextData = getCurrentContextData(req);
+
+      result = await UserContext.create({
+        user: req.userId,
+        email: user?.email || "unknown",
+        ip: currentContextData.ip,
+        country: currentContextData.country,
+        city: currentContextData.city,
+        browser: currentContextData.browser,
+        platform: currentContextData.platform,
+        os: currentContextData.os,
+        device: currentContextData.device,
+        deviceType: currentContextData.deviceType,
+        isTrusted: true,
+      });
     }
 
     const userContextData = {
@@ -430,10 +445,13 @@ const getBlockedAuthContextData = async (req, res) => {
  */
 const getUserPreferences = async (req, res) => {
   try {
-    const userPreferences = await UserPreference.findOne({ user: req.userId });
+    let userPreferences = await UserPreference.findOne({ user: req.userId });
 
     if (!userPreferences) {
-      return res.status(404).json({ message: "Not found" });
+      userPreferences = await UserPreference.create({
+        user: req.userId,
+        enableContextBasedAuth: false,
+      });
     }
 
     res.status(200).json(userPreferences);
@@ -450,8 +468,15 @@ const getUserPreferences = async (req, res) => {
 const deleteContextAuthData = async (req, res) => {
   try {
     const contextId = req.params.contextId;
+    const userId = req.userId;
 
-    await SuspiciousLogin.deleteOne({ _id: contextId });
+    const record = await SuspiciousLogin.findOne({ _id: contextId, user: userId });
+
+    if (!record) {
+      return res.status(404).json({ message: "Not found" });
+    }
+
+    await SuspiciousLogin.deleteOne({ _id: contextId, user: userId });
 
     res.status(200).json({
       message: "Data deleted successfully",
@@ -469,12 +494,17 @@ const deleteContextAuthData = async (req, res) => {
 const blockContextAuthData = async (req, res) => {
   try {
     const contextId = req.params.contextId;
+    const userId = req.userId;
 
-    await SuspiciousLogin.findOneAndUpdate(
-      { _id: contextId },
+    const record = await SuspiciousLogin.findOneAndUpdate(
+      { _id: contextId, user: userId },
       { $set: { isBlocked: true, isTrusted: false } },
       { new: true }
     );
+
+    if (!record) {
+      return res.status(404).json({ message: "Not found" });
+    }
 
     res.status(200).json({
       message: "Blocked successfully",
@@ -492,12 +522,17 @@ const blockContextAuthData = async (req, res) => {
 const unblockContextAuthData = async (req, res) => {
   try {
     const contextId = req.params.contextId;
+    const userId = req.userId;
 
-    await SuspiciousLogin.findOneAndUpdate(
-      { _id: contextId },
+    const record = await SuspiciousLogin.findOneAndUpdate(
+      { _id: contextId, user: userId },
       { $set: { isBlocked: false, isTrusted: true } },
       { new: true }
     );
+
+    if (!record) {
+      return res.status(404).json({ message: "Not found" });
+    }
 
     res.status(200).json({
       message: "Unblocked successfully",

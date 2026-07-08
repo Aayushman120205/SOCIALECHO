@@ -9,16 +9,20 @@
 
 require("dotenv").config();
 const express = require("express");
+const http = require("http");
 const adminRoutes = require("./routes/admin.route");
 const userRoutes = require("./routes/user.route");
 const postRoutes = require("./routes/post.route");
 const communityRoutes = require("./routes/community.route");
 const contextAuthRoutes = require("./routes/context-auth.route");
+const chatRoutes = require("./routes/chat.route");
 const search = require("./controllers/search.controller");
 const Database = require("./config/database");
 const decodeToken = require("./middlewares/auth/decodeToken");
+const initializeSocket = require("./sockets");
 
 const app = express();
+const server = http.createServer(app);
 
 const cors = require("cors");
 const morgan = require("morgan");
@@ -47,6 +51,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 require("./config/passport.js");
+initializeSocket(server);
 
 app.get("/server-status", (req, res) => {
   res.status(200).json({ message: "Server is up and running!" });
@@ -58,6 +63,7 @@ app.use("/auth", contextAuthRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
 app.use("/communities", communityRoutes);
+app.use("/messages", chatRoutes);
 app.use("/admin", adminRoutes);
 
 process.on("SIGINT", async () => {
@@ -71,4 +77,4 @@ process.on("SIGINT", async () => {
   }
 });
 
-app.listen(PORT, () => console.log(`Server up and running on port ${PORT}!`));
+server.listen(PORT, () => console.log(`Server up and running on port ${PORT}!`));

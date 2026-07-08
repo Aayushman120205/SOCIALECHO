@@ -351,12 +351,22 @@ const getFollowingUsersPosts = async (req, res) => {
 const deletePost = async (req, res) => {
   try {
     const id = req.params.id;
+    const userId = req.userId;
     const post = await Post.findById(id);
 
     if (!post) {
       return res.status(404).json({
         message: "Post not found. It may have been deleted already",
       });
+    }
+
+    const currentUser = await User.findById(userId).select("role").lean();
+    const isOwner = post.user.toString() === userId;
+    const isPrivilegedUser =
+      currentUser && (currentUser.role === "moderator" || currentUser.role === "admin");
+
+    if (!isOwner && !isPrivilegedUser) {
+      return res.status(403).json({ message: "Forbidden" });
     }
 
     await post.remove();
