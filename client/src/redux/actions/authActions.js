@@ -2,6 +2,7 @@ import * as api from "../api/authAPI";
 import * as types from "../constants/authConstants";
 import { isValidToken } from "../../utils/authUtils";
 import { refreshTokenAction } from "./refreshTokenAction";
+import { connectSocket, disconnectSocket } from "../../socket/socket";
 
 export const initializeAuth = () => async (dispatch) => {
   const accessToken = JSON.parse(localStorage.getItem("profile"))?.accessToken;
@@ -14,6 +15,7 @@ export const initializeAuth = () => async (dispatch) => {
       dispatch(setAccessToken(accessToken));
       dispatch(setRefreshToken(refreshToken));
       dispatch(setUserData(JSON.parse(localStorage.getItem("profile")).user));
+      connectSocket(accessToken);
     } else {
       await dispatch(refreshTokenAction(refreshToken));
     }
@@ -33,6 +35,7 @@ export const setUserData = (userData) => async (dispatch) => {
 };
 
 export const setInitialAuthState = (navigate) => async (dispatch) => {
+  disconnectSocket();
   await dispatch({ type: types.LOGOUT });
   navigate("/signin");
 };
@@ -44,9 +47,12 @@ export const clearMessage = () => async (dispatch) => {
 export const logoutAction = () => async (dispatch) => {
   try {
     const { data } = await api.logout();
+    disconnectSocket();
     localStorage.removeItem("profile");
     dispatch({ type: types.LOGOUT, payload: data });
   } catch (error) {
+    disconnectSocket();
+    localStorage.removeItem("profile");
     dispatch({ type: types.LOGOUT, payload: types.ERROR_MESSAGE });
   }
 };
@@ -56,6 +62,7 @@ export const signUpAction =
   async (dispatch) => {
     try {
       localStorage.removeItem("profile");
+      disconnectSocket();
       const response = await api.signUp(formData);
       const { error } = response;
       if (error) {
@@ -106,6 +113,7 @@ export const signInAction = (formData, navigate) => async (dispatch) => {
         accessTokenUpdatedAt,
       };
       localStorage.setItem("profile", JSON.stringify(profile));
+      connectSocket(accessToken);
       dispatch({
         type: types.SIGNIN_SUCCESS,
         payload: profile,

@@ -7,6 +7,7 @@ import {
   HiOutlineUserCircle,
   HiOutlineRectangleStack,
   HiOutlineTag,
+  HiOutlineChatBubbleLeftRight,
 } from "react-icons/hi2";
 import { HiOutlineUserGroup } from "react-icons/hi2";
 import { GiTeamIdea } from "react-icons/gi";
@@ -58,6 +59,13 @@ const Leftbar = ({ showLeftbar }) => {
           >
             <HiOutlineTag className="text-xl" />
             <p>Saved</p>
+          </Link>
+          <Link
+            className="flex items-center gap-2 text-lg font-medium hover:text-primary"
+            to="/messages"
+          >
+            <HiOutlineChatBubbleLeftRight className="text-xl" />
+            <p>Messages</p>
           </Link>
 
           {user && user.role === "general" && (

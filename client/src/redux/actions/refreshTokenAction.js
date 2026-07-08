@@ -1,4 +1,6 @@
 import axios from "axios";
+import { connectSocket, disconnectSocket } from "../../socket/socket";
+
 const API = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   headers: {
@@ -21,12 +23,14 @@ export const refreshTokenAction = (refreshToken) => async (dispatch) => {
     const profile = JSON.parse(localStorage.getItem("profile"));
     const payload = response.data;
     localStorage.setItem("profile", JSON.stringify({ ...profile, ...payload }));
+    connectSocket(payload.accessToken);
     dispatch({
       type: "REFRESH_TOKEN_SUCCESS",
       payload: payload,
     });
   } catch (error) {
     localStorage.removeItem("profile");
+    disconnectSocket();
     dispatch({
       type: "REFRESH_TOKEN_FAIL",
       payload: error.response.data,

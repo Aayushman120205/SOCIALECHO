@@ -7,10 +7,12 @@ import {
   unfollowUserAction,
   followUserAction,
 } from "../redux/actions/userActions";
+import { createOrGetConversationAction } from "../redux/actions/chatActions";
 import PublicPost from "../components/profile/PublicPost";
 import { CiLocationOn } from "react-icons/ci";
 import { AiOutlineFieldTime } from "react-icons/ai";
 import { FiUsers, FiUser, FiUserMinus, FiUserPlus } from "react-icons/fi";
+import { HiOutlineChatBubbleOvalLeft } from "react-icons/hi2";
 import { HiOutlineDocumentText } from "react-icons/hi2";
 import CommonLoading from "../components/loader/CommonLoading";
 import Tooltip from "../components/shared/Tooltip";
@@ -22,6 +24,8 @@ const PublicProfile = () => {
 
   const [followLoading, setFollowLoading] = useState(false);
   const [unfollowLoading, setUnfollowLoading] = useState(false);
+  const [messageLoading, setMessageLoading] = useState(false);
+  const [messageError, setMessageError] = useState("");
 
   const userData = useSelector((state) => state.auth?.userData);
   const userProfile = useSelector((state) => state.user?.publicUserProfile);
@@ -56,6 +60,30 @@ const PublicProfile = () => {
     setFollowLoading(false);
   };
 
+  const handleMessage = async (publicUserId) => {
+    if (messageLoading || publicUserId === userData?._id) {
+      return;
+    }
+
+    try {
+      setMessageError("");
+      setMessageLoading(true);
+      const conversation = await dispatch(
+        createOrGetConversationAction(publicUserId)
+      );
+
+      if (!conversation?._id) {
+        throw new Error("Unable to open conversation");
+      }
+
+      navigate(`/messages/${conversation._id}`);
+    } catch (error) {
+      setMessageError(error.message || "Unable to open conversation");
+    } finally {
+      setMessageLoading(false);
+    }
+  };
+
   if (!userProfile) {
     return (
       <div className="col-span-2 flex items-center justify-center">
@@ -86,7 +114,7 @@ const PublicProfile = () => {
     <button
       onClick={onClick}
       type="button"
-      className={`absolute bottom-0 right-0 h-9 w-9 rounded-full border px-2 py-2 text-sm font-semibold ${color} bg-white`}
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border px-2 py-2 text-sm font-semibold ${color} bg-white`}
       disabled={loading}
     >
       {loading ? (
@@ -117,30 +145,46 @@ const PublicProfile = () => {
     />
   );
 
+  const showMessageButton = publicUserId !== userData?._id;
+
   return (
     <div className="main-section">
       <div className="rounded border bg-white px-6 py-6">
         <div className="flex flex-col items-center justify-center bg-white py-6">
-          <div className="relative">
+          <div>
             <img
               className="mr-4 h-20 w-20 rounded-full object-cover"
               src={avatar}
               alt="Profile"
               loading="lazy"
             />
-            <UnfollowButton
-              loading={unfollowLoading}
-              onClick={() => handleUnfollow(publicUserId)}
-              name={name}
-            />
-            {!isModerator && !isFollowing && (
-              <FollowButton
-                loading={followLoading}
-                onClick={() => handleFollow(publicUserId)}
-                name={name}
-              />
-            )}
           </div>
+          {showMessageButton ? (
+            <div className="mt-4 flex items-center justify-center gap-3">
+              {isFollowing ? (
+                <UnfollowButton
+                  loading={unfollowLoading}
+                  onClick={() => handleUnfollow(publicUserId)}
+                  name={name}
+                />
+              ) : !isModerator ? (
+                <FollowButton
+                  loading={followLoading}
+                  onClick={() => handleFollow(publicUserId)}
+                  name={name}
+                />
+              ) : null}
+              <button
+                type="button"
+                onClick={() => handleMessage(publicUserId)}
+                disabled={messageLoading}
+                className="inline-flex items-center gap-2 rounded-md border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white disabled:hover:text-primary"
+              >
+                <HiOutlineChatBubbleOvalLeft />
+                {messageLoading ? "Creating..." : "Message"}
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div>
@@ -154,6 +198,11 @@ const PublicProfile = () => {
           {role === "moderator" ? (
             <p className="rounded-md bg-sky-200 px-2 py-1 text-center text-sm font-semibold text-sky-700">
               Moderator
+            </p>
+          ) : null}
+          {messageError ? (
+            <p className="mt-2 text-center text-sm text-red-500">
+              {messageError}
             </p>
           ) : null}
         </div>
@@ -261,7 +310,7 @@ const PublicProfile = () => {
               {interests.split(",").map((interest, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   {interest.trim()}
                 </span>

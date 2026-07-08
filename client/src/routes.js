@@ -11,6 +11,7 @@ import AllCommunities from "./pages/AllCommunities";
 import MyCommunities from "./pages/MyCommunities";
 import Following from "./pages/Following";
 import SignUp from "./pages/SignUp";
+import Messages from "./pages/Messages";
 
 const ReportedPost = lazy(() => import("./pages/ReportedPost"));
 const Moderator = lazy(() => import("./pages/Moderator"));
@@ -74,6 +75,14 @@ export const privateRoutes = [
   {
     path: "/following",
     element: <Following />,
+  },
+  {
+    path: "/messages",
+    element: <Messages />,
+  },
+  {
+    path: "/messages/:conversationId",
+    element: <Messages />,
   },
   {
     path: "/devices-locations",

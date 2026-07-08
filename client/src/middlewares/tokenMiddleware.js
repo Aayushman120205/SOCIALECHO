@@ -1,5 +1,6 @@
 import jwt_decode from "jwt-decode";
 import { refreshTokenAction } from "../redux/actions/refreshTokenAction";
+import { disconnectSocket } from "../socket/socket";
 
 export const tokenMiddleware = (store) => (next) => async (action) => {
   if (action.meta && action.meta.requiresAuth) {
@@ -16,10 +17,12 @@ export const tokenMiddleware = (store) => (next) => async (action) => {
             throw new Error("Access token not found after refresh");
           }
         } catch (error) {
+          disconnectSocket();
           store.dispatch({ type: "LOGOUT" });
         }
       }
     } else {
+      disconnectSocket();
       store.dispatch({ type: "LOGOUT" });
     }
   }

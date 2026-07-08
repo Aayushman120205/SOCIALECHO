@@ -24,6 +24,8 @@ module.exports = function authSocket(socket, next) {
       email: decoded.email,
     };
 
+    console.log(`Socket authenticated: ${socket.user.id}`);
+
     return next();
   } catch (err) {
     return next(new Error("Authentication error"));

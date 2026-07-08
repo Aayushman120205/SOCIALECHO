@@ -3,6 +3,8 @@ const Message = require("../models/message.model");
 const { emitToUser } = require("../sockets/connection");
 const getSocketInstance = require("../sockets").getIO;
 
+const participantDisplayFields = "name avatar email";
+
 const createOrGetConversation = async (req, res) => {
   try {
     const currentUserId = req.userId;
@@ -26,6 +28,11 @@ const createOrGetConversation = async (req, res) => {
       });
     }
 
+    await conversation.populate({
+      path: "participants",
+      select: participantDisplayFields,
+    });
+
     return res.status(200).json(conversation);
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
@@ -40,7 +47,7 @@ const getConversations = async (req, res) => {
       .sort({ lastMessageAt: -1, createdAt: -1 })
       .populate({
         path: "participants",
-        select: "username fullname profilePicture",
+        select: participantDisplayFields,
       })
       .populate({
         path: "lastMessageId",
